@@ -1,43 +1,54 @@
 package org.example;
 
 
-import java.util.Arrays;
+import org.example.graph.Edge;
+import org.example.graph.GraphAdjList;
+import org.example.graph.JsonConstructor;
+import org.example.graph.Node;
+
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 
 public class Main {
     public static void main(String[] args) {
-        // define edges of the graph
-        List<Edge> edges = Arrays.asList(
-                new Edge(0, 1, 2),
-                new Edge(0, 2, 4),
-                new Edge(1, 2, 4),
-                new Edge(2, 0, 5),
-                new Edge(2, 1, 4),
-                new Edge(3, 2, 3),
-                new Edge(4, 5, 1),
-                new Edge(5, 4, 3));
+        GraphAdjList graph = new GraphAdjList();
 
-        // call graph class Constructor to construct a graph
-        Graph graph = new Graph(edges);
+        Node nodeA = new Node("Sofia");
+        Node nodeB = new Node("Varna");
+        Node nodeC = new Node("Plovdiv");
+        Node nodeD = new Node("Smolyan");
+        Node nodeE = new Node("Burgas");
+        Node nodeF = new Node("Svilengrad");
+        Node nodeG = new Node("Pernik");
 
-        // print the graph as an adjacency list
-        Graph.printGraph(graph);
+        graph.addEdge(nodeA, nodeG, 30.0);
+        graph.addEdge(nodeA, nodeB, 400.0);
+        graph.addEdge(nodeA, nodeC, 119.5);
 
-        Graph g = new Graph(5);
-        g.addEdge(0, 1);
-        g.addEdge(0, 2);
-        g.addEdge(0, 3);
-        g.addEdge(1, 2);
-        g.addEdge(2, 4);
-        //print the DFS Traversal sequence
-        System.out.println("Depth First Traversal for given graph"+
-                "(with 0 as starting vertex)");
-        g.DFS(0);
-        System.out.println();
+        graph.addEdge(nodeB, nodeA, 130);
+        graph.addEdge(nodeB, nodeC, 300);
+        graph.addEdge(nodeB, nodeE, 110);
+        graph.addEdge(nodeB, nodeD, 530);
 
-        g.BFS(0);
+        graph.addEdge(nodeC, nodeD, 120);
+        graph.addEdge(nodeE, nodeB, 140);
+        graph.addEdge(nodeF, nodeB, 240);
+        graph.addEdge(nodeG, nodeB, 240);
+
+        System.out.println("Adjacency List:");
+        graph.printGraph();
+
+
+        Map<Node, List<Edge>> adjList = graph.getAdjList();
+        JsonConstructor jsonConstructor = new JsonConstructor();
+        try{
+
+            jsonConstructor.constructJson(adjList);
+        }catch (Exception e){
+            System.out.println(e);
+        }
+      //  graph.findShortestPathDijkstra(nodeB);
     }
 }
 
