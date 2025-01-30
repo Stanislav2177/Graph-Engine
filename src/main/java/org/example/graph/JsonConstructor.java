@@ -26,11 +26,11 @@ public class JsonConstructor {
             System.out.println("Start: " + node.getLabel());
             List<Edge> edgeList = adjList.get(node);
             for (Edge edge : edgeList) {
-                System.out.println("Target: " + edge.getDest().getLabel());
+                System.out.println("Target: " + edge.getNode().getLabel());
                 edges.add(new GraphDTO(
                         String.valueOf(edgeCounter),
                         node.getLabel(),
-                        edge.dest.getLabel(),
+                        edge.node.getLabel(),
                         edge.weight
                 ));
                 edgeCounter++;
@@ -39,7 +39,8 @@ public class JsonConstructor {
 
         // Combine nodes and edges into a single JSON structure
         ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(Map.of("elements", Map.of("nodes", nodes, "edges", edges)));
+        String json = mapper.writeValueAsString(Map.of("elements",
+                Map.of("nodes", nodes, "edges", edges)));
 
         System.out.println(json);
         return json;

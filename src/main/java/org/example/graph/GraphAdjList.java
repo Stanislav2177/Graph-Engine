@@ -30,7 +30,7 @@ public class GraphAdjList {
             List<Edge> edges = entry.getValue();
             System.out.print(node.getLabel() + " -> ");
             for (Edge edge : edges) {
-                System.out.print(edge.dest.getLabel() + "(" + edge.weight + ") ");
+                System.out.print(edge.node.getLabel() + "(" + edge.weight + ") ");
             }
             System.out.println();
         }
@@ -54,18 +54,18 @@ public class GraphAdjList {
 
         while (!pq.isEmpty()) {
             Edge current = pq.poll();
-            Node currentNode = current.dest;
+            Node currentNode = current.node;
 
             if (visited.contains(currentNode)) continue;
             visited.add(currentNode);
 
             for (Edge edge : adjList.get(currentNode)) {
-                if (!visited.contains(edge.dest)) {
+                if (!visited.contains(edge.node)) {
                     double newDist = dist.get(currentNode) + edge.weight;
-                    if (newDist < dist.get(edge.dest)) {
-                        dist.put(edge.dest, newDist);
-                        prev.put(edge.dest, currentNode); // Update predecessor
-                        pq.add(new Edge(edge.dest, newDist));
+                    if (newDist < dist.get(edge.node)) {
+                        dist.put(edge.node, newDist);
+                        prev.put(edge.node, currentNode); // Update predecessor
+                        pq.add(new Edge(edge.node, newDist));
                     }
                 }
             }

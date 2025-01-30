@@ -9,6 +9,8 @@ public class Node {
         this.label = label;
         this.id = -1;
     }
+    public Node() {
+    }
     public String getLabel() {
         return label;
     }

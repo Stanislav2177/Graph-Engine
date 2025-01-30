@@ -1,23 +1,24 @@
 package org.example.graph;
 
-import org.example.graph.Node;
-
 //class to store edges of the weighted graph
 public class Edge {
 
-        Node dest;
+        Node node;
         double weight;
         public Edge(Node dest, double weight) {
-            this.dest = dest;
+            this.node = dest;
             this.weight = weight;
         }
 
-    public Node getDest() {
-        return dest;
+    public Edge() {
     }
 
-    public void setDest(Node dest) {
-        this.dest = dest;
+    public Node getNode() {
+        return node;
+    }
+
+    public void setNode(Node node) {
+        this.node = node;
     }
 
     public double getWeight() {
