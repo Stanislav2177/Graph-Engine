@@ -3,29 +3,30 @@ package org.example.graph;
 import java.util.List;
 
 public class GraphData {
-    private Node source;
-    private List<Edge> destinations;
+    private String source;
+    private List<Edge> target;
 
     public GraphData() {}
 
-    public GraphData(Node source, List<Edge> destinations) {
+    public GraphData(String source, List<Edge> destinations) {
         this.source = source;
-        this.destinations = destinations;
+        this.target = destinations;
     }
 
-    public Node getSource() {
+    public String getSource() {
         return source;
     }
 
-    public void setSource(Node source) {
+    public void setSource(String source) {
         this.source = source;
     }
 
-    public List<Edge> getDestinations() {
-        return destinations;
+
+    public List<Edge> getTarget() {
+        return target;
     }
 
-    public void setDestinations(List<Edge> destinations) {
-        this.destinations = destinations;
+    public void setTarget(List<Edge> target) {
+        this.target = target;
     }
 }

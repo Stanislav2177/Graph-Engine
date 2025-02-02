@@ -24,6 +24,35 @@ public class GraphAdjList {
         adjList.get(src).add(new Edge(dest, weight));
     }
 
+    public boolean deleteEdges(String target) {
+        if (target == null || target.isEmpty()) {
+            return false;
+        }
+
+        Set<Node> nodes = adjList.keySet();
+        for (Node node : nodes) {
+            adjList.get(node).removeIf((n) -> n.getNode().getLabel().equals(target));
+        }
+        return false;
+    }
+
+    public boolean deleteSource(String label) {
+        if (label == null || label.isEmpty()) {
+            return false;
+        }
+
+        Node node = new Node(label);
+
+        if (adjList.containsKey(node)) {
+            // Remove the node and all its edges
+            adjList.remove(node);
+            return true;
+        }
+
+        return false;
+    }
+
+
     public void printGraph() {
         for (Map.Entry<Node, List<Edge>> entry : adjList.entrySet()) {
             Node node = entry.getKey();

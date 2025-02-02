@@ -1,15 +1,17 @@
 package org.example.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.controller.GraphController;
 import org.example.graph.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class GraphService implements GraphEngineService{
-    private GraphAdjList graph = new GraphAdjList();
+    public GraphAdjList graph = new GraphAdjList();
     private final JsonConstructor jsonConstructor = new JsonConstructor();
+    ObjectMapper mapper = new ObjectMapper();
 
     public GraphService() {
         initGraph();
@@ -17,35 +19,54 @@ public class GraphService implements GraphEngineService{
 
     @Override
     public void addNodeAndTargetsToGraph(String json) {
-        ObjectMapper mapper = new ObjectMapper();
         try {
             GraphData graphData = mapper.readValue(json, GraphData.class);
-            System.out.println("Source: " + graphData.getSource().getLabel());
-            for (Edge edge : graphData.getDestinations()) {
+            System.out.println("Source: " + graphData.getSource());
+            Node sourceNode = new Node(graphData.getSource());
+            getGraph().addNode(sourceNode);
+
+            for (Edge edge : graphData.getTarget()) {
                 System.out.println("Destination: " + edge.getNode().getLabel() + ", Weight: " + edge.getWeight());
+                getGraph().addEdge(sourceNode, new Node(edge.getNode().getLabel()), edge.getWeight());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private Map<Node, List<Edge>> getAdjList(){
-        return getGraph().getAdjList();
-    }
-
     public String createJsonForFullGraph(){
         try{
-            return getJsonConstructor().constructJson(getAdjList());
+            return getJsonConstructor().constructJson(getGraph().getAdjList());
         }catch (Exception e){
             System.out.println(e);
             return null;
         }
     }
 
+
+
+
+
     @Override
-    public void deleteNode(String source) {
+    public void deleteNode(String json) {
+        try{
+            if (json.startsWith("\"") && json.endsWith("\"")) {
+                json = mapper.readValue(json, String.class);
+            }
+            List<String> data = mapper.readValue(json, new TypeReference<List<String>>() {});
+
+            for (String k : data) {
+                System.out.println(k);
+                graph.deleteEdges(k);
+                graph.deleteSource(k);
+            }
+
+        }catch (Exception e){
+            System.out.println(e);
+        }
 
     }
+    private record sourceAndTarget (String source, String target){}
 
     public GraphAdjList getGraph() {
         return graph;
