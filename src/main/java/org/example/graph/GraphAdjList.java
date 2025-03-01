@@ -1,5 +1,7 @@
 package org.example.graph;
 
+import org.example.models.ShortestPathDto;
+
 import java.util.*;
 
 public class GraphAdjList {
@@ -22,6 +24,10 @@ public class GraphAdjList {
         addNode(dest);
 
         adjList.get(src).add(new Edge(dest, weight));
+    }
+
+    public void deleteEdge(Node src, Node dest){
+        adjList.get(src).removeIf((d) -> Objects.equals (d.getNode().getLabel(), dest.getLabel()));
     }
 
     public boolean deleteEdges(String target) {
@@ -53,6 +59,7 @@ public class GraphAdjList {
     }
 
 
+
     public void printGraph() {
         for (Map.Entry<Node, List<Edge>> entry : adjList.entrySet()) {
             Node node = entry.getKey();
@@ -65,10 +72,10 @@ public class GraphAdjList {
         }
     }
 
-    public void findShortestPathDijkstra(Node start) {
+    // Dijkstra's algorithm to find the shortest path from start to target
+    public ShortestPathDto findShortestPathDijkstra(Node start, Node target) {
         Map<Node, Double> dist = new HashMap<>();
-        Map<Node, Node> prev = new HashMap<>(); // Tracks predecessors
-
+        Map<Node, Node> prev = new HashMap<>();
         PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e.weight));
         Set<Node> visited = new HashSet<>();
 
@@ -88,33 +95,65 @@ public class GraphAdjList {
             if (visited.contains(currentNode)) continue;
             visited.add(currentNode);
 
-            for (Edge edge : adjList.get(currentNode)) {
+            // Stop if target is reached
+            if (currentNode.equals(target)) break;
+
+            for (Edge edge : adjList.getOrDefault(currentNode, new ArrayList<>())) {
                 if (!visited.contains(edge.node)) {
                     double newDist = dist.get(currentNode) + edge.weight;
                     if (newDist < dist.get(edge.node)) {
                         dist.put(edge.node, newDist);
-                        prev.put(edge.node, currentNode); // Update predecessor
+                        prev.put(edge.node, currentNode);
                         pq.add(new Edge(edge.node, newDist));
                     }
                 }
             }
         }
 
-        System.out.println("Shortest distances from node " + start.getLabel() + ":");
-        for (Map.Entry<Node, Double> entry : dist.entrySet()) {
-            System.out.println("To " + entry.getKey().getLabel() + " -> " + entry.getValue());
-            System.out.println("Path: " + reconstructPath(entry.getKey(), prev));
+        // If no path found
+        if (dist.get(target) == Double.POSITIVE_INFINITY) {
+            System.out.println("No path found from " + start.getLabel() + " to " + target.getLabel());
+            return new ShortestPathDto(start.getLabel(), target.getLabel(), List.of(), new HashMap<>());
         }
+
+        // Reconstruct path
+        List<Node> path = reconstructPath(target, prev);
+        List<String> pathLabels = path.stream().map(Node::getLabel).toList();
+
+        // Calculate weights between vertices in the path
+        Map<String, Double> weightsBetweenVertices = new HashMap<>();
+        for (int i = 0; i < path.size() - 1; i++) {
+            Node current = path.get(i);
+            Node next = path.get(i + 1);
+            double weight = getWeightBetween(current, next);
+            weightsBetweenVertices.put(current.getLabel() + " -> " + next.getLabel(), weight);
+        }
+
+        System.out.println("Shortest path from " + start.getLabel() + " to " + target.getLabel() + ": " + pathLabels);
+        System.out.println("Weights between vertices: " + weightsBetweenVertices);
+
+        return new ShortestPathDto(start.getLabel(), target.getLabel(), pathLabels, weightsBetweenVertices);
     }
+
+    private double getWeightBetween(Node from, Node to) {
+        for (Edge edge : adjList.getOrDefault(from, new ArrayList<>())) {
+            if (edge.node.equals(to)) {
+                return edge.weight;
+            }
+        }
+        return Double.POSITIVE_INFINITY; // If no edge exists
+    }
+
 
     private List<Node> reconstructPath(Node target, Map<Node, Node> prev) {
         List<Node> path = new LinkedList<>();
         for (Node at = target; at != null; at = prev.get(at)) {
             path.add(0, at);
-            System.out.println("path: " + at.getLabel());
         }
         return path;
     }
+
+
 
 
 }
