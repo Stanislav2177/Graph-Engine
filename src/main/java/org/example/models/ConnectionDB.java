@@ -1,4 +1,4 @@
-package org.example.graph;
+package org.example.models;
 
 public class ConnectionDB {
     private int sourceNode_id;

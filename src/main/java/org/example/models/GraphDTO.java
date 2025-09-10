@@ -1,4 +1,4 @@
-package org.example.graph;
+package org.example.models;
 
 
 //For Edges presented in the json

@@ -1,5 +1,6 @@
 package org.example.graph;
 
+import org.example.logger.Logger;
 import org.example.models.ShortestPathDto;
 
 import java.util.*;
@@ -19,46 +20,92 @@ public class GraphAdjList {
         return adjList;
     }
 
-    public void addEdge(Node src, Node dest, double weight) {
-        addNode(src);
-        addNode(dest);
+    public boolean addEdge(Node src, Node dest, double weight) {
+        try {
+            addNode(src);
+            addNode(dest);
 
-        adjList.get(src).add(new Edge(dest, weight));
+            adjList.get(src).add(new Edge(dest, weight));
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System, "Connection is added between: " + src.getLabel() + " and " + dest.getLabel() + " with weight: " + weight);
+            return true;
+        } catch (Exception ex) {
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System, "Problem with addEdge method: " + ex.getMessage());
+            return false;
+        }
     }
 
-    public void deleteEdge(Node src, Node dest){
-        adjList.get(src).removeIf((d) -> Objects.equals (d.getNode().getLabel(), dest.getLabel()));
+
+    public void deleteEdge(Node src, Node dest) {
+        try{
+            adjList.get(src).removeIf((d) -> Objects.equals(d.getNode().getLabel(), dest.getLabel()));
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System, "Delete Edge successfully finished: SRC " + src.getLabel() + " DEST: " + dest.getLabel());
+        }catch (Exception ex){
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS,Logger.Queue.System, "Problem with addEdge method: " + ex.getMessage());
+        }
     }
 
     public boolean deleteEdges(String target) {
-        if (target == null || target.isEmpty()) {
+        try {
+            if (target == null || target.isEmpty()) {
+                return false;
+            }
+
+            Set<Node> nodes = adjList.keySet();
+            for (Node node : nodes) {
+                adjList.get(node).removeIf((n) -> n.getNode().getLabel().equals(target));
+            }
+
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System,"Delete Edges successfully finished: TARGET " + target);
+            return true;
+        }catch (Exception ex){
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System, "Problem with deleteEdges method: " + ex.getMessage());
             return false;
         }
-
-        Set<Node> nodes = adjList.keySet();
-        for (Node node : nodes) {
-            adjList.get(node).removeIf((n) -> n.getNode().getLabel().equals(target));
-        }
-        return false;
     }
 
-    public boolean deleteSource(String label) {
-        if (label == null || label.isEmpty()) {
-            return false;
+    public Node getNodeFromGraph(String nodeName){
+        for (Node node : getAdjList().keySet()) {
+            if(node.getLabel().equals(nodeName)){
+                return node;
+            }
         }
 
-        Node node = new Node(label);
+        return null;
+    }
 
-        if (adjList.containsKey(node)) {
-            // Remove the node and all its edges
-            adjList.remove(node);
+    public boolean deleteSource(String target) {
+        try {
+            if (target == null || target.isEmpty()) {
+                return false;
+            }
+
+            Node node = new Node(target);
+            if (adjList.containsKey(node)) {
+                // Remove the node and all its edges
+                adjList.remove(node);
+            }
+
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System, "Delete Source successfully finished: TARGET " + target);
             return true;
         }
-
-        return false;
+        catch (Exception ex){
+            Logger.getInstance().writeLog(Logger.Log.SUCCESS, Logger.Queue.System, "Problem with deleteSource method: " + ex.getMessage());
+            return false;
+        }
     }
 
 
+    //Replace node
+    public void changeNodeData(Node node) {
+        for (Node n : getAdjList().keySet()) {
+            if (n.getLabel().equals(node.getLabel())) {
+                List<Edge> edges = getAdjList().get(n);
+                getAdjList().remove(n);
+                getAdjList().put(node, edges);
+                break;
+            }
+        }
+    }
 
     public void printGraph() {
         for (Map.Entry<Node, List<Edge>> entry : adjList.entrySet()) {
@@ -79,13 +126,11 @@ public class GraphAdjList {
         PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e.weight));
         Set<Node> visited = new HashSet<>();
 
-        // Initialize distances
         for (Node node : adjList.keySet()) {
             dist.put(node, Double.POSITIVE_INFINITY);
         }
         dist.put(start, 0.0);
 
-        // Start from the source node
         pq.add(new Edge(start, 0));
 
         while (!pq.isEmpty()) {
@@ -113,12 +158,13 @@ public class GraphAdjList {
         // If no path found
         if (dist.get(target) == Double.POSITIVE_INFINITY) {
             System.out.println("No path found from " + start.getLabel() + " to " + target.getLabel());
-            return new ShortestPathDto(start.getLabel(), target.getLabel(), List.of(), new HashMap<>());
+            return new ShortestPathDto(start.getLabel(), target.getLabel(), List.of(), List.of() , new HashMap<>());
         }
 
         // Reconstruct path
         List<Node> path = reconstructPath(target, prev);
         List<String> pathLabels = path.stream().map(Node::getLabel).toList();
+        List<Integer> pathIds = path.stream().map(Node::getId).toList();
 
         // Calculate weights between vertices in the path
         Map<String, Double> weightsBetweenVertices = new HashMap<>();
@@ -132,10 +178,10 @@ public class GraphAdjList {
         System.out.println("Shortest path from " + start.getLabel() + " to " + target.getLabel() + ": " + pathLabels);
         System.out.println("Weights between vertices: " + weightsBetweenVertices);
 
-        return new ShortestPathDto(start.getLabel(), target.getLabel(), pathLabels, weightsBetweenVertices);
+        return new ShortestPathDto(start.getLabel(), target.getLabel(), pathLabels, pathIds, weightsBetweenVertices);
     }
 
-    private double getWeightBetween(Node from, Node to) {
+    public double getWeightBetween(Node from, Node to) {
         for (Edge edge : adjList.getOrDefault(from, new ArrayList<>())) {
             if (edge.node.equals(to)) {
                 return edge.weight;
@@ -152,8 +198,6 @@ public class GraphAdjList {
         }
         return path;
     }
-
-
 
 
 }

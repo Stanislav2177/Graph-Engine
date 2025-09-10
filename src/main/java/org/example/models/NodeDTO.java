@@ -1,4 +1,4 @@
-package org.example.graph;
+package org.example.models;
 
 
 //For nodes which are presented in the json

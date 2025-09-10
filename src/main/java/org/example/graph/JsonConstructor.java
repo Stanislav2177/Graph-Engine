@@ -2,6 +2,8 @@ package org.example.graph;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.models.GraphDTO;
+import org.example.models.NodeDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +20,7 @@ public class JsonConstructor {
         // Add all nodes to the node list
         Set<Node> nodeSet = adjList.keySet();
         for (Node node : nodeSet) {
-            nodes.add(new NodeDTO(node.getLabel(), node.getLabel()));
+            nodes.add(new NodeDTO(node.getLabel(), node.getLabel(), node.getLat(), node.getLng()));
         }
 
         // Add all edges

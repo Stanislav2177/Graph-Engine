@@ -4,12 +4,12 @@ import java.util.List;
 
 public class EdgeData {
     private String source;
-    private List<String> targets;
+    private String target;
     private String weight;
 
-    public EdgeData(String source, List<String> targets, String weight) {
+    public EdgeData(String source, String target, String weight) {
         this.source = source;
-        this.targets = targets;
+        this.target = target;
         this.weight = weight;
     }
 
@@ -24,12 +24,12 @@ public class EdgeData {
         this.source = source;
     }
 
-    public List<String> getTargets() {
-        return targets;
+    public String getTarget() {
+        return target;
     }
 
-    public void setTargets(List<String> targets) {
-        this.targets = targets;
+    public void setTarget(String targets) {
+        this.target = targets;
     }
 
     public String getWeight() {
@@ -44,7 +44,7 @@ public class EdgeData {
     public String toString() {
         return "EdgeData{" +
                 "source='" + source + '\'' +
-                ", targets=" + targets +
+                ", targets=" + target +
                 ", weight='" + weight + '\'' +
                 '}';
     }

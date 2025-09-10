@@ -3,9 +3,12 @@ package org.example.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.apache.commons.configuration.ConfigurationException;
 import org.example.graph.Node;
+import org.example.models.ApiResponse;
 import org.example.service.GraphEngineService;
 import org.example.service.GraphService;
+import org.example.workflow.WorkflowMechanism;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,51 +25,45 @@ public class GraphController implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String method = exchange.getRequestMethod();
-        String path = exchange.getRequestURI().getPath();
+        try {
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
 
-
-        // Handle CORS preflight request
-        if (method.equalsIgnoreCase("OPTIONS")) {
-            handleOptionsRequest(exchange);
-            return;
-        }
-
-        //TODO: IMPLEMENT FILTER CLASS LOGIC WITH HIERARCHY OF THE APIs
-        //TODO: WHICH TO CONTAINS AND SECURITY
-
-        switch (method) {
-            case "GET":
-                handleGetRequest(exchange, path);
-                break;
-            case "POST":
-                handlePostRequest(exchange, path);
-                break;
-            case "DELETE":
-                handleDeleteRequest(exchange, path);
-                break;
-            default:
-                sendResponse(exchange, 405, "Method Not Allowed");
+            if (method.equalsIgnoreCase("OPTIONS")) {
+                handleOptionsRequest(exchange);
+                return;
+            }
+            switch (method) {
+                case "GET":
+                    handleGetRequest(exchange, path);
+                    break;
+                case "POST":
+                    handlePostRequest(exchange, path);
+                    break;
+                case "DELETE":
+                    handleDeleteRequest(exchange, path);
+                    break;
+                default:
+                    sendResponse(exchange, 405, "Method Not  Allowed");
+            }
+        }catch (Exception ex){
+            throw new RuntimeException();
         }
     }
 
-    // Handle OPTIONS request for CORS preflight
     private void handleOptionsRequest(HttpExchange exchange) throws IOException {
-        // Set CORS headers
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         exchange.getResponseHeaders().add("Access-Control-Max-Age", "3600");
 
-        // Send empty response for OPTIONS request
         exchange.sendResponseHeaders(204, -1);
     }
 
 
-    private void handleGetRequest(HttpExchange exchange, String path) throws IOException {
+    private void handleGetRequest(HttpExchange exchange, String path) throws IOException, ConfigurationException {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET");
-
         String method = exchange.getRequestMethod();
         System.out.println("Received a " + method + " request at " + path);
         String response = null;
@@ -77,18 +74,25 @@ public class GraphController implements HttpHandler {
             Map<String, String> queryParams = graphEngineService.getQueryParams(requestURI);
             String from = queryParams.get("from");
             String to = queryParams.get("to");
-            String shortestPath = graphEngineService.findShortestPath(new Node(from), new Node(to));
+            String shortestPath = graphEngineService.findShortestPathJSON(new Node(from), new Node(to));
             response = shortestPath;
+        }
+        else if (path.equals("/graph/all-trips")) {
+            String s = graphEngineService.getAllTransportData();
+            response = s;
+        } else if (path.equals("/graph/all-vehicles")) {
+            String s = graphEngineService.getAllVehiclesDetailed();
+            response = s;
+        } else if (path.equals("/graph/all-schedules")) {
+            String s =  graphEngineService.getAllSchedules();
+            response = s;
         } else {
             sendResponse(exchange, 404, "Not Found");
         }
-        //TODO : MAKE A CUSTOME RESPONSE
         exchange.sendResponseHeaders(200, response.getBytes().length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(response.getBytes());
         }
-        //System.out.println("Endpoint created: http://localhost:" + getPort() + path);
-
     }
 
     private void handlePostRequest(HttpExchange exchange, String path) throws IOException {
@@ -107,16 +111,42 @@ public class GraphController implements HttpHandler {
             String serverResponse;
             int statusCode;
 
-            // Handle different paths
             if (path.equals("/graph/add-node")) {
-                graphEngineService.addNodeAndTargetsToGraph(requestBodyString);
-                serverResponse = "Node added successfully: " + requestBodyString;
+                graphEngineService.addNodeInMemory(requestBodyString);
+                serverResponse = "[]";
                 statusCode = 200;
             } else if (path.equals("/graph/add-connections")) {
                 graphEngineService.connectSourceWithEdges(requestBodyString);
-                serverResponse = "Connections added successfully: " + requestBodyString;
+                serverResponse = "[]";
                 statusCode = 200;
-            } else {
+            }
+            else if (path.equals("/graph/new-trip")){
+                String s = graphEngineService.startNewTrip(requestBodyString);
+                if(s.isEmpty()){
+                    serverResponse = "[]";
+                }else{
+                    serverResponse = s;
+                }
+                statusCode = 200;
+            }
+            else if(path.equals("/graph/add-vehicle")){
+                String s = graphEngineService.addVehicleDB(requestBodyString);
+                if(s.isEmpty()){
+                    serverResponse = "[]";
+                }else{
+                    serverResponse = s;
+                }
+                statusCode = 200;
+            }else if(path.equals("/graph/add-schedule")){
+                String s = graphEngineService.addNewSchedule(requestBodyString);
+                if(s.isEmpty()){
+                    serverResponse = "[]";
+                }else{
+                    serverResponse = s;
+                }
+                statusCode = 200;
+            }
+            else {
                 serverResponse = "Not Found";
                 statusCode = 404;
             }
@@ -139,36 +169,34 @@ public class GraphController implements HttpHandler {
         }
     }
 
-
     private void handleDeleteRequest(HttpExchange exchange, String path) throws IOException {
-//        if (path.equals("/full-graph")) {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "DELETE");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+       try {
+           exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+           exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "DELETE");
+           exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
 
-        // Read the request body
-        InputStream requestBody = exchange.getRequestBody();
-        byte[] data = requestBody.readAllBytes();
-        String requestBodyString = new String(data);
-        System.out.println("Received DELETE data: " + requestBodyString);
-        if (path.equals("/graph/specificNodes")) {
-            graphEngineService.deleteNode(requestBodyString);
-        } else if (path.equals("/graph/deleteConnections")) {
-            graphEngineService.deleteEdges(requestBodyString);
-        } else {
-            sendResponse(exchange, 404, "Not Found");
-        }
+           InputStream requestBody = exchange.getRequestBody();
+           byte[] data = requestBody.readAllBytes();
+           String requestBodyString = new String(data);
+           System.out.println("Received DELETE data: " + requestBodyString);
+           String response = "";
 
-        String method = exchange.getRequestMethod();
-        System.out.println("Received a " + method + " request at " + path);
-        // Set response headers and body
-        //TODO : MAKE A CUSTOME RESPONSE
-        String response = "THANK YOU";
-        exchange.sendResponseHeaders(200, response.getBytes().length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
-        }
-        //System.out.println("Endpoint created: http://localhost:" + getPort() + path);
+           if (path.equals("/graph/specificNodes")) {
+               String s = graphEngineService.deleteNode(requestBodyString);
+               response = s;
+           }else{
+               sendResponse(exchange, 404, "Not Found");
+           }
+
+           String method = exchange.getRequestMethod();
+           System.out.println("Received a " + method + " request at " + path);
+           exchange.sendResponseHeaders(200, response.getBytes().length);
+           try (OutputStream os = exchange.getResponseBody()) {
+               os.write(response.getBytes());
+           }
+       }catch (Exception ex){
+           System.out.println("problem");
+       }
     }
 
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {

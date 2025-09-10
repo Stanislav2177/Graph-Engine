@@ -6,13 +6,15 @@ import java.util.Map;
 public class ShortestPathDto {
     private String start;
     private String target;
-    private List<String> shortestPath;
+    private List<String> shortestPathLabels;
+    private List<Integer> shortestPathIds;
     private Map<String, Double> distances;
 
-    public ShortestPathDto(String start, String target, List<String> shortestPath, Map<String, Double> distances) {
+    public ShortestPathDto(String start, String target, List<String> shortestPathLabels, List<Integer> shortestPathIds, Map<String, Double> distances) {
         this.start = start;
         this.target = target;
-        this.shortestPath = shortestPath;
+        this.shortestPathLabels = shortestPathLabels;
+        this.shortestPathIds = shortestPathIds;
         this.distances = distances;
     }
 
@@ -32,12 +34,20 @@ public class ShortestPathDto {
         this.target = target;
     }
 
-    public List<String> getShortestPath() {
-        return shortestPath;
+    public List<String> getShortestPathLabels() {
+        return shortestPathLabels;
     }
 
-    public void setShortestPath(List<String> shortestPath) {
-        this.shortestPath = shortestPath;
+    public void setShortestPathLabels(List<String> shortestPathLabels) {
+        this.shortestPathLabels = shortestPathLabels;
+    }
+
+    public List<Integer> getShortestPathIds() {
+        return shortestPathIds;
+    }
+
+    public void setShortestPathIds(List<Integer> shortestPathIds) {
+        this.shortestPathIds = shortestPathIds;
     }
 
     public Map<String, Double> getDistances() {

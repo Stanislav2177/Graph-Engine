@@ -2,7 +2,6 @@ package org.example.graph;
 
 //class to store edges of the weighted graph
 public class Edge {
-
         Node node;
         double weight;
         public Edge(Node dest, double weight) {
